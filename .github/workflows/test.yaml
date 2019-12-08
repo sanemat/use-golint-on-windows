@@ -1,0 +1,40 @@
+name: test
+on:
+  push:
+    branches:
+    - "**"
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-latest
+        - macOS-latest
+        - windows-latest
+    steps:
+    - name: setup env unix
+      run: |
+        echo ::set-env name=GOPATH::${{ runner.workspace }}
+        echo ::add-path::${{ runner.workspace }}/bin
+      if: "matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'"
+    - name: setup env windows
+      run: |
+        echo ::set-env name=GOPATH::${{ runner.workspace }}
+        echo ::add-path::${{ runner.workspace }}\bin
+      if: "matrix.os == 'windows-latest'"
+    - name: setup go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.x
+    - name: checkout
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+        path: src/github.com/${{ github.repository }}
+    - name: golint
+      run: |
+        go env
+        go install golang.org/x/lint/golint
+        golint ./...
